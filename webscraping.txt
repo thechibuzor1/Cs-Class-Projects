@@ -1,0 +1,30 @@
+import requests
+from bs4 import BeautifulSoup
+import time
+
+
+def categorize(website_source):
+    parser = BeautifulSoup(website_source.content, "lxml")
+    videos_container = parser.find("div", class_="video-files")
+    for video in videos_container.find_all("article", class_="file-one shadow"):
+        try:
+            video_title = video.div.img["title"]
+            video_category = video.find("div", class_="info").find("div", class_="category").a.text
+            video_link = video.find("div", class_="info").find("h2").a["href"]
+            uploaded_time = video.find("div", class_="inner").find("span").text.strip()
+        except AttributeError as ae:
+            print(f"this error occurred: {ae}")
+        except Exception as e:
+            print(f"{e} has occurred")
+        else:
+            print(f"video_title: {video_title}")
+            print(f"video_category: {video_category}")
+            print(f"video_link: {video_link}")
+            print(f"TimeOfUpload: {uploaded_time}")
+            print()
+
+
+if __name__ == "__main__":
+    while True:
+        categorize(website_source=requests.get("https://www.thenetnaija.net/videos"))
+        time.sleep(600)
