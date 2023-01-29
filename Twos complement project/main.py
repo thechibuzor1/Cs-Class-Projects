@@ -7,6 +7,7 @@ second_num = abs(
     int(input("Enter the second number (minus(-) is not needed): ")))
 
 
+# convert to binary
 def convertToBinary(num: int):
     res = ""
     while num > 0:
@@ -22,8 +23,11 @@ def convertToBinary(num: int):
 
     return (res)
 
+# convert to twos negative
+
 
 def convertToNegative(num: str):
+    # inverting 1s and 0s
     res = ''
     for i in range(0, len(num)):
         if num[i] == "0":
@@ -34,6 +38,8 @@ def convertToNegative(num: str):
     # adding one after inverting
     sum = bin(int(res, 2) + int('1', 2))
     return (sum[2:])
+
+# adding two binaries
 
 
 def addtion(num1, num2):
@@ -59,6 +65,7 @@ def addtion(num1, num2):
 
     # Compute the carry.
         carry = 0 if r < 2 else 1
+    # ignoring if carry = 1
 
     return (result.zfill(max_len))
 
