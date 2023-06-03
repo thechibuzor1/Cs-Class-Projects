@@ -1,6 +1,4 @@
-import time
-import matplotlib.pyplot as plt
-import numpy as np
+
 
 
 ''' sr = 100.0
@@ -154,6 +152,10 @@ plt.ylabel("Amplitude")
 plt.show()
  '''
 
+
+import time
+import matplotlib.pyplot as plt
+import numpy as np
 
 def DFT(x):
     """
