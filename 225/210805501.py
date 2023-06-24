@@ -76,8 +76,13 @@ def main():
         "Select a method (bisection, newton-raphson, secant): ").lower()
 
     equation = input("Equation: ")
-    arg_str = input(
-        "Enter the values for a, b, c, n, r, s (comma or space-separated): ")
+    
+    if method == "newton-raphson":
+        arg_str = input(
+            "Enter the values for a, b, c, n (comma or space-separated): ")
+    else:
+        arg_str = input(
+            "Enter the values for a, b, c, n, r (comma or space-separated): ")
     arg_str = arg_str.replace("[", "").replace("]", "")
     initial_solution = input("Initial Solutions: ")
     arg = [int(x) for x in arg_str.replace(",", " ").split()]
