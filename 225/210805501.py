@@ -60,38 +60,13 @@ def secant_method(arg):
         "Secant method did not converge within the maximum number of iterations.")
 
 
-def solve_transcendental_equation(method, arg):
-    if method == "bisection":
-        return bisection_method(arg)
-    elif method == "newton-raphson":
-        return newton_raphson_method(arg)
-    elif method == "secant":
-        return secant_method(arg)
-    else:
-        raise ValueError("Invalid method choice.")
-
-
-def main():
-    method = input(
-        "Select a method (bisection, newton-raphson, secant): ").lower()
-
-    equation = input("Equation: ")
-
-    if method == "newton-raphson":
-        arg_str = input(
-            "Enter the values for a, b, c, n, r (comma or space-separated): ")
-    else:
-        arg_str = input(
-            "Enter the values for a, b, c, n, r, s (comma or space-separated): ")
-    arg_str = arg_str.replace("[", "").replace("]", "")
-    initial_solution = input("Initial Solutions: ")
-    arg = [int(x) for x in arg_str.replace(",", " ").split()]
+def main(arg: list):
     try:
-        result = solve_transcendental_equation(method, arg)
-        print("Value of x:", result)
+        if len(arg) == 5:
+            return newton_raphson_method(arg)
+        elif len(arg) == 6:
+            return bisection_method(arg)
+        else:
+            return "Something went wrong"
     except ValueError as e:
         print("Error:", str(e))
-
-
-if __name__ == "__main__":
-    main()
