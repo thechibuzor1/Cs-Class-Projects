@@ -87,7 +87,7 @@ public class Dining {
                         Thread.sleep(1000);
                         System.out.println("Transaction between Account " + sender.id + " and Account "
                                 + receiver.id + " completed.");
-                        break;
+
                     } finally {
                         receiver.lock.unlock();
                         System.out.println(
