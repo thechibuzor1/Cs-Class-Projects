@@ -110,7 +110,6 @@ public class Dining {
 
     public static class Account {
 
-        private int balance = 2000;
         private Lock lock = new ReentrantLock();
         private int id;
 
@@ -122,41 +121,6 @@ public class Dining {
             return id;
         }
 
-        public int getBalance() {
-            return balance;
-        }
-
-        public void debit(int amount) {
-
-            try {
-                if (balance > amount) {
-                    balance = balance - amount;
-                    System.out.println("Transaction successful!");
-                    Thread.sleep(5);
-
-                } else {
-                    System.out.println("Insufficient Balance");
-                }
-
-            } catch (InterruptedException ex) {
-
-            }
-        }
-
-        public void credit(int amount) {
-
-            try {
-                {
-                    balance = balance + amount;
-                    System.out.println("Transaction successful!");
-                    Thread.sleep(5);
-
-                }
-
-            } catch (InterruptedException ex) {
-
-            }
-        }
     }
 
 }
