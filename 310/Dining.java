@@ -11,9 +11,14 @@ public class Dining {
             accounts[i] = new Account(i + 1);
         }
 
+        // Create a custom ThreadFactory to set thread priorities
+
         ExecutorService executor = Executors.newCachedThreadPool();
+
         // Simulate transactions between accounts
+
         for (int i = 0; i < 5; i++) {
+
             int nextAccountIndex = (i + 1) % 5; // Circular ordering
             executor.execute(new Transactions(accounts[i], accounts[nextAccountIndex], i + 1));
         }
@@ -29,6 +34,7 @@ public class Dining {
         private int transactionId;
         private Account sender;
         private Account receiver;
+        private int transactionCount = 0;
 
         Transactions(Account A, Account B, int id) {
             transactionId = id;
@@ -36,73 +42,164 @@ public class Dining {
             receiver = B;
         }
 
+        public boolean getLocks() {
+            return (sender.lock.tryLock() && receiver.lock.tryLock());
+        }
+
+        public boolean getLeftLock() {
+            return (sender.lock.tryLock());
+        }
+
+        public boolean getRightLock() {
+            return (receiver.lock.tryLock());
+        }
+
         public void run() {
-
             try {
-                /* all picked left */
-                /*
-                 * if (sender.lock.tryLock()) {
-                 * System.out.println("Transaction " + transactionId +
-                 * " acquired lock to account " + sender.id);
-                 * if (receiver.lock.tryLock()) {
-                 * System.out.println("Transaction " + transactionId +
-                 * " acquired lock to account " + receiver.id);
-                 * try {
-                 * System.out.println(
-                 * "Account " + sender.id + " performing transaction with Account " +
-                 * receiver.id);
-                 * // Simulating a transaction
-                 * Thread.sleep(1000);
-                 * System.out.println("Transaction between Account " + sender.id +
-                 * " and Account "
-                 * + receiver.id + " completed.");
-                 * 
-                 * } finally {
-                 * receiver.lock.unlock();
-                 * System.out.println(
-                 * "Transaction " + transactionId + " released lock to account " + receiver.id);
-                 * }
-                 * } else {
-                 * System.out.println(
-                 * "Transaction " + transactionId + " failed to acquire lock to account " +
-                 * receiver.id);
-                 * }
-                 * } else {
-                 * System.out.println(
-                 * "Transaction " + transactionId + " failed to acquire lock to account " +
-                 * sender.id);
-                 * }
-                 */
+                while (true) {
 
-                /* starvation: only two transactions can happen. the remaining 3 starve */
+                    /* All picked left waiting for the other to release the right: lifelock */
 
-                if (sender.lock.tryLock() && receiver.lock.tryLock()) {
-                    System.out.println("Transaction " + transactionId + " acquired locks to account " + sender.id
-                            + " and account" + receiver.id);
+                    /*
+                     * if (sender.lock.tryLock()) {
+                     * System.out.println("Transaction " + transactionId +
+                     * " acquired lock to account " + sender.id);
+                     * if (receiver.lock.tryLock()) {
+                     * System.out.println("Transaction " + transactionId +
+                     * " acquired lock to account " + receiver.id);
+                     * try {
+                     * System.out.println(
+                     * "Account " + sender.id + " performing transaction with Account " +
+                     * receiver.id);
+                     * // Simulating a transaction
+                     * Thread.sleep(1000);
+                     * System.out.println("Transaction between Account " + sender.id +
+                     * " and Account "
+                     * + receiver.id + " completed.");
+                     * 
+                     * } finally {
+                     * receiver.lock.unlock();
+                     * System.out.println(
+                     * "Transaction " + transactionId + " released lock to account " + receiver.id);
+                     * }
+                     * } else {
+                     * System.out.println(
+                     * "Transaction " + transactionId + " failed to acquire lock to account " +
+                     * receiver.id);
+                     * }
+                     * } else {
+                     * System.out.println(
+                     * "Transaction " + transactionId + " failed to acquire lock to account " +
+                     * sender.id);
+                     * }
+                     */
 
-                    try {
-                        System.out.println(
-                                "Account " + sender.id + " performing transaction with Account " + receiver.id);
-                        // Simulating a transaction
+                    /*
+                     * starvation: one or more transactions keep failing to acquire the lock and run
+                     * to completion.
+                     */
+
+                    /*
+                     * if (transactionCount == 0) {
+                     * if (getLocks()) {
+                     * 
+                     * System.out.println("Transaction " + transactionId +
+                     * " acquired locks to account " + sender.id
+                     * + " and account" + receiver.id);
+                     * 
+                     * try {
+                     * 
+                     * System.out.println(
+                     * "Account " + sender.id + " performing transaction with Account " +
+                     * receiver.id);
+                     * 
+                     * // Simulating a transaction
+                     * 
+                     * System.out.println("Transaction " + transactionId + " completed.");
+                     * transactionCount += 1;
+                     * Thread.sleep(1000);
+                     * } catch (Exception e) {
+                     * Thread.currentThread().interrupt();
+                     * }
+                     * 
+                     * finally {
+                     * receiver.lock.unlock();
+                     * sender.lock.unlock();
+                     * Thread.sleep(1000);
+                     * 
+                     * System.out.println(
+                     * "Transaction " + transactionId + " released lock to account " + sender.id
+                     * + " and  account " + receiver.id);
+                     * 
+                     * }
+                     * } else {
+                     * System.out.println("Transaction " + transactionId +
+                     * " failed to acquire locks to account " + sender.id
+                     * + " and account" + receiver.id);
+                     * Thread.sleep(1000);
+                     * 
+                     * }
+                     * } else {
+                     * Thread.sleep(1000);
+                     * }
+                     */
+
+                    /*
+                     * fixed synchronization. first, pick left. if it cant get right. DROP LEFT and
+                     * WAIT
+                     */
+
+                    if (transactionCount == 0) {
+                        if (getLeftLock()) {
+
+                            if (getRightLock()) {
+                                System.out.println("Transaction " + transactionId +
+                                        " acquired locks to account " + sender.id
+                                        + " and account " + receiver.id);
+
+                                try {
+
+                                    System.out.println(
+                                            "Account " + sender.id + " performing transaction with Account " +
+                                                    receiver.id);
+
+                                    // Simulating a transaction
+
+                                    System.out.println("Transaction " + transactionId + " completed.");
+                                    transactionCount += 1;
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+
+                                }
+
+                                finally {
+                                    receiver.lock.unlock();
+                                    sender.lock.unlock();
+                                    Thread.sleep(1000);
+
+                                    System.out.println(
+                                            "Transaction " + transactionId + " released lock to account " + sender.id
+                                                    + " and  account " + receiver.id);
+
+                                }
+                            } else {
+                                sender.lock.unlock();
+                            }
+                        } else {
+                            System.out.println("Transaction " + transactionId +
+                                    " failed to acquire locks to account " + sender.id
+                                    + " and account " + receiver.id);
+                            Thread.sleep(1000);
+
+                        }
+                    } else {
                         Thread.sleep(1000);
-                        System.out.println("Transaction between Account " + sender.id + " and Account "
-                                + receiver.id + " completed.");
-
-                    } finally {
-                        receiver.lock.unlock();
-                        System.out.println(
-                                "Transaction " + transactionId + " released lock to account " + receiver.id);
                     }
 
-                } else {
-                    System.out.println(
-                            "Transaction " + transactionId + " failed to acquire lock to account " + sender.id);
                 }
-            } catch (InterruptedException e) {
-                /* Thread.currentThread().interrupt(); */
-            } finally {
-                sender.lock.unlock();
-                System.out.println("Transaction " + transactionId + " released lock to account " + sender.id);
+            } catch (
+
+            InterruptedException e) {
             }
 
         }
