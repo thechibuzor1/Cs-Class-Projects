@@ -3,7 +3,15 @@ import java.util.concurrent.locks.*;
 
 public class Dining {
 
+    /*
+     * Imagine 5 accounts at the table. In this analogy, the accounts are the forks.
+     * Any two accounts can participate in a transaction. Transactions ==
+     * philosophers. So in this example the transactions (philosopher) can not only
+     * sit at the edge of the table between two accounts (forks).
+     */
+
     public static void main(String[] args) {
+        // create a list of type "Acount"
         Account[] accounts = new Account[5];
 
         // Create 5 accounts
@@ -11,8 +19,7 @@ public class Dining {
             accounts[i] = new Account(i + 1);
         }
 
-        // Create a custom ThreadFactory to set thread priorities
-
+        // initailize a threadpool
         ExecutorService executor = Executors.newCachedThreadPool();
 
         // Simulate transactions between accounts
@@ -30,27 +37,31 @@ public class Dining {
     }
 
     public static class Transactions implements Runnable {
-
-        private int transactionId;
-        private Account sender;
-        private Account receiver;
-        private int transactionCount = 0;
+        // "Philosopher"
+        private int transactionId; // each transaction ('Philosopher') has a unique id
+        private Account sender; // left "fork"
+        private Account receiver;// right "fork"
+        private int transactionCount = 0; // keep track of how many times each "Philosopher" has eaten.
 
         Transactions(Account A, Account B, int id) {
+            // constructor
             transactionId = id;
             sender = A;
             receiver = B;
         }
 
         public boolean getLocks() {
+            // get both right and left fork
             return (sender.lock.tryLock() && receiver.lock.tryLock());
         }
 
         public boolean getLeftLock() {
+            // get left fork
             return (sender.lock.tryLock());
         }
 
         public boolean getRightLock() {
+            // get right fork
             return (receiver.lock.tryLock());
         }
 
@@ -173,6 +184,7 @@ public class Dining {
                                 }
 
                                 finally {
+                                    // release the locks when done
                                     receiver.lock.unlock();
                                     sender.lock.unlock();
                                     Thread.sleep(1000);
@@ -206,7 +218,7 @@ public class Dining {
     }
 
     public static class Account {
-
+        // "fork" class
         private Lock lock = new ReentrantLock();
         private int id;
 
