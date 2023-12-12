@@ -36,27 +36,28 @@ public class SyncImp {
         }
 
         public /* synchronized */ void deposit(int amount) {
-
+            lock.lock();
             // before synchronize
-            int newBalance = amount + balance;
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException ex) {
-
-            }
-            balance = newBalance;
-
             /*
-             * try {
              * int newBalance = amount + balance;
+             * try {
              * Thread.sleep(5);
-             * balance = newBalance;
              * } catch (InterruptedException ex) {
              * 
-             * } finally {
-             * lock.unlock();
              * }
+             * balance = newBalance;
              */
+
+            try {
+                int newBalance = amount + balance;
+                Thread.sleep(5);
+                balance = newBalance;
+            } catch (InterruptedException ex) {
+
+            } finally {
+                lock.unlock();
+            }
+
         }
 
     }
