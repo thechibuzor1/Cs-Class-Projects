@@ -3,31 +3,24 @@ import java.util.concurrent.locks.*;
 
 public class Dining {
 
-    /*
-     * Imagine 5 accounts at the table. In this analogy, the accounts are the forks.
-     * Any two accounts can participate in a transaction. Transactions ==
-     * philosophers. So in this example the transactions (philosopher) can not only
-     * sit at the edge of the table between two accounts (forks).
-     */
-
     public static void main(String[] args) {
-        // create a list of type "Acount"
-        Account[] accounts = new Account[5];
+        // create a list of type forks
+        Fork[] fork = new Fork[5];
 
-        // Create 5 accounts
+        // Create 5 fork objects
         for (int i = 0; i < 5; i++) {
-            accounts[i] = new Account(i + 1);
+            fork[i] = new Fork(i + 1);
         }
 
         // initailize a threadpool
         ExecutorService executor = Executors.newCachedThreadPool();
 
-        // Simulate transactions between accounts
+        // Simulate a round table
 
         for (int i = 0; i < 5; i++) {
 
-            int nextAccountIndex = (i + 1) % 5; // Circular ordering
-            executor.execute(new Transactions(accounts[i], accounts[nextAccountIndex], i + 1));
+            int nextFork = (i + 1) % 5; // Circular ordering
+            executor.execute(new Philosopher(fork[i], fork[nextFork], i + 1));
         }
 
         executor.shutdown();
@@ -36,33 +29,33 @@ public class Dining {
 
     }
 
-    public static class Transactions implements Runnable {
+    public static class Philosopher implements Runnable {
         // "Philosopher"
-        private int transactionId; // each transaction ('Philosopher') has a unique id
-        private Account sender; // left "fork"
-        private Account receiver;// right "fork"
-        private int transactionCount = 0; // keep track of how many times each "Philosopher" has eaten.
+        private int PhilosopherId; // each Philosopher has a unique id
+        private Fork Left; // left "fork"
+        private Fork Right;// right "fork"
+        private int timesPhilosopherAte = 0; // keep track of how many times each Philosopher has eaten.
 
-        Transactions(Account A, Account B, int id) {
+        Philosopher(Fork A, Fork B, int id) {
             // constructor
-            transactionId = id;
-            sender = A;
-            receiver = B;
+            PhilosopherId = id;
+            Left = A;
+            Right = B;
         }
 
-        public boolean getLocks() {
+        public boolean getForks() {
             // get both right and left fork
-            return (sender.lock.tryLock() && receiver.lock.tryLock());
+            return (Left.lock.tryLock() && Right.lock.tryLock());
         }
 
-        public boolean getLeftLock() {
+        public boolean getLeftFork() {
             // get left fork
-            return (sender.lock.tryLock());
+            return (Left.lock.tryLock());
         }
 
-        public boolean getRightLock() {
+        public boolean getRightFork() {
             // get right fork
-            return (receiver.lock.tryLock());
+            return (Right.lock.tryLock());
         }
 
         public void run() {
@@ -70,90 +63,64 @@ public class Dining {
 
                 /* All picked left waiting for the other to release the right: livelock */
 
-                while (transactionCount == 0) {
-                    if (getLeftLock()) {
-                        System.out.println("Transaction " + transactionId +
-                                " acquired lock to account " + sender.id);
-                        if (getRightLock()) {
-                            System.out.println("Transaction " + transactionId +
-                                    " acquired lock to account " + receiver.id);
-                            try {
-                                System.out.println(
-                                        "Account " + sender.id + " performing transaction with Account " +
-                                                receiver.id);
-                                // Simulating a transaction
-                                Thread.sleep(1000);
-                                transactionCount += 1;
-                                System.out.println("Transaction between Account " + sender.id +
-                                        " and Account "
-                                        + receiver.id + " completed.");
-
-                            } finally {
-                                receiver.lock.unlock();
-                                sender.lock.unlock();
-                                System.out.println(
-                                        "Transaction " + transactionId + " released lock to account " + receiver.id);
-                            }
-                        } else {
-                            System.out.println(
-                                    "Transaction " + transactionId + " failed to acquire lock to account " +
-                                            receiver.id);
-                        }
-                    } else {
-                        System.out.println(
-                                "Transaction " + transactionId + " failed to acquire lock to account " +
-                                        sender.id);
-                        Thread.sleep(1000);
-                    }
-                }
-
                 /*
-                 * starvation: one or more transactions keep failing to acquire the lock and run
-                 * to completion.
-                 */
-
-                /*
-                 * while (transactionCount == 0) {
-                 * if (getLocks()) {
-                 * 
-                 * System.out.println("Transaction " + transactionId +
-                 * " acquired locks to account " + sender.id
-                 * + " and account" + receiver.id);
+                 * while (timesPhilosopherAte == 0) {
+                 * if (getLeftFork()) {
+                 * Thread.sleep(1000);
+                 * if (getRightFork()) {
                  * 
                  * try {
-                 * 
                  * System.out.println(
-                 * "Account " + sender.id + " performing transaction with Account " +
-                 * receiver.id);
+                 * "Philosopher " + PhilosopherId +
+                 * " is eating. ");
                  * 
-                 * // Simulating a transaction
-                 * 
-                 * System.out.println("Transaction " + transactionId + " completed.");
-                 * transactionCount += 1;
                  * Thread.sleep(1000);
-                 * } catch (Exception e) {
-                 * Thread.currentThread().interrupt();
-                 * }
+                 * timesPhilosopherAte += 1;
                  * 
-                 * finally {
-                 * receiver.lock.unlock();
-                 * sender.lock.unlock();
-                 * Thread.sleep(1000);
-                 * 
-                 * System.out.println(
-                 * "Transaction " + transactionId + " released lock to account " + sender.id
-                 * + " and  account " + receiver.id);
+                 * } finally {
+                 * Left.lock.unlock();
+                 * Right.lock.unlock();
                  * 
                  * }
                  * } else {
-                 * System.out.println("Transaction " + transactionId +
-                 * " failed to acquire locks to account " + sender.id
-                 * + " and account" + receiver.id);
                  * Thread.sleep(1000);
+                 * System.out.println("Philosopher " + PhilosopherId + " is thinking.");
+                 * 
+                 * }
+                 * } else {
+                 * Thread.sleep(1000);
+                 * System.out.println("Philosopher " + PhilosopherId + " is thinking.");
                  * 
                  * }
                  * }
                  */
+
+                /*
+                 * starvation: one or more Philosopher keep failing to acquire the lock and run
+                 * to completion.
+                 */
+
+                while (timesPhilosopherAte == 0) {
+                    if (getForks()) {
+
+                        try {
+                            System.out.println(
+                                    "Philosopher " + PhilosopherId +
+                                            " is eating. ");
+
+                            Thread.sleep(1000);
+                            timesPhilosopherAte += 1;
+
+                        } finally {
+                            Left.lock.unlock();
+                            Right.lock.unlock();
+
+                        }
+                    } else {
+                        Thread.sleep(1000);
+                        System.out.println("Philosopher " + PhilosopherId + " is thinking.");
+                    }
+                }
 
                 /*
                  * fixed synchronization. first, pick left. if it cant get right. DROP LEFT and
@@ -161,24 +128,17 @@ public class Dining {
                  */
 
                 /*
-                 * while (transactionCount == 0) {
-                 * if (getLeftLock()) {
+                 * while (timesPhilosopherAte < 10) {
+                 * if (getLeftFork()) {
                  * 
-                 * if (getRightLock()) {
-                 * System.out.println("Transaction " + transactionId +
-                 * " acquired locks to account " + sender.id
-                 * + " and account " + receiver.id);
+                 * if (getRightFork()) {
                  * 
                  * try {
                  * 
-                 * System.out.println(
-                 * "Account " + sender.id + " performing transaction with Account " +
-                 * receiver.id);
+                 * // Simulating a philisopher eating
                  * 
-                 * // Simulating a transaction
-                 * 
-                 * System.out.println("Transaction " + transactionId + " completed.");
-                 * transactionCount += 1;
+                 * System.out.println("Philosopher " + PhilosopherId + " is eating.");
+                 * timesPhilosopherAte += 1;
                  * Thread.sleep(1000);
                  * } catch (InterruptedException e) {
                  * 
@@ -186,22 +146,16 @@ public class Dining {
                  * 
                  * finally {
                  * // release the locks when done
-                 * receiver.lock.unlock();
-                 * sender.lock.unlock();
+                 * Left.lock.unlock();
+                 * Right.lock.unlock();
                  * Thread.sleep(1000);
                  * 
-                 * System.out.println(
-                 * "Transaction " + transactionId + " released lock to account " + sender.id
-                 * + " and  account " + receiver.id);
-                 * 
                  * }
                  * } else {
-                 * sender.lock.unlock();
+                 * Left.lock.unlock();
                  * }
                  * } else {
-                 * System.out.println("Transaction " + transactionId +
-                 * " failed to acquire locks to account " + sender.id
-                 * + " and account " + receiver.id);
+                 * System.out.println("Philosopher " + PhilosopherId + " is thinking.");
                  * Thread.sleep(1000);
                  * 
                  * }
@@ -216,12 +170,12 @@ public class Dining {
         }
     }
 
-    public static class Account {
+    public static class Fork {
         // "fork" class
         private Lock lock = new ReentrantLock();
         private int id;
 
-        Account(int n) {
+        Fork(int n) {
             id = n;
         }
 
